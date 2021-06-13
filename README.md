@@ -1,74 +1,70 @@
-# SymNet
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2e9024b5c2ff44279f49ea5382244d09)](https://app.codacy.com/app/yrahul3910/symnet?utm_source=github.com&utm_medium=referral&utm_content=yrahul3910/symnet&utm_campaign=Badge_Grade_Dashboard)
+# LipGeneNet
 
-SymNet is a deep learning pipeline with a focus on simplicity. Functionality is available through command-line options or as an API. The focus is
-on simplicity and getting quick results.
+LipGeneNet is a deep learning pipeline used for testing the Lipschitz Adaptive Learning Rate (LALR) for the task of Gene Expression Inference.
 
-## API Usage
-### Numeric data
-The `symnet.py` file shows how to use the API for multi-class classification
-on a tabular (CSV) dataset. Start by creating a model:  
+# Dataset
+Gene Omnibus Expression(GEO) Dataset, based on the Affymetric Microarray platform, is a publicly available dataset prepared by the Broad Institute. It consists of 129 158 gene expression profiles, each profile consisting of 978 landmark genes and 21290 target genes. Chen et al. [1] performed joint quantile normalization and removed duplicates using two other Gene Expression datasets-Genotype-Tissue Expression (GTEx) and 1000 Genomes Expression Data (1000G).  The GTEx and 1000G datasets are based on the Illumina RNA-Seq platform and used Gencode V12 annotations to measure the expression levels of each gene [2], [3]. The modified GEO dataset obtained consists of over 90,000 gene expression profiles, each profile consisting of 943 landmark genes and 9520 target genes, standardized to zero mean and unit standard deviation for each gene. The modified GEO dataset was used for training by Chen et al. [2] and we use the same dataset for our experimentation.
 
-    model = NumericModel(csv_path, n_classes=3, label_column='target', task='classification')
 
-Then, you can call `fit` and `predict` on the model, or find the loss and accuracy using
-the `score` method.
+## Instructions to deploy the LipGene model
 
-## Image data
-Image classifiers inherit from `AbstractImageClassificationModel`. Currently,
-only ResNet is implemented. See `symnet.py` for example usage. Like
-all models, you can call `fit`, `predict`, and `score`.
+### Requirements
+* `python` 3.x
+* `pip`
+* [`virtualenv`](https://virtualenv.pypa.io/en/latest/)
 
-## CLI Usage
-You can use the `symnet.py` file to run classification on a tabular dataset. The available options are:
-*  `--task`: One of `'classification'` and `'regression'`
-*  `--dataset`: The CSV dataset.
-*  `--data-type`: As of now, only `'numeric'` and `'image'` are supported.
-*  `--labels`: The CSV column with labels
-*  `--num-classes`: Number of classes (for classification)
-*  `--activation`: The activation to use. Any of `('relu', 'elu', 'selu', 'sigmoid', 'softmax', 'linear', 'sbaf', 'arelu', 'softplus)`
-*  `--no-header`: Indicates that the CSV does not have a header row
+### Create new virtual environment
+The following command creates a new virtual environment named `lipGeneEnv` in the current directory.
+```sh
+$ virtualenv lipGeneEnv
+```
+
+### Activate virtual environment
+```sh
+# Windows (CMD.exe)
+$ path\to\lipGeneEnv\Scripts\activate.bat
+# Unix
+$ source path/to/lipGeneEnv/bin/activate
+```
+### Install the required Python modules
+```sh
+$ (lipGeneEnv) pip install -r requirements.txt
+```
+
+### Setup ```base_path``` in GeneExpression directory
+Execution logs and model weights are saved here
+```
+mkdir test_results
+cd test_results
+mkdir LipGeneModel
+cd ..
+```
+
+### CLI Usage
+You can use the `symnet.py` file to run regression on gene dataset. The available options are:
+*  `--dataset`: The dataset path.
 *  `--batch-size`: The batch size to use
 *  `--train-split`: The training data subset split size
 *  `--epochs`: The number of epochs
-*  `--no-balance`: Do not rebalance classes in classification problems
-*  `--no-augment`: For image datasets, do not augment the data
+*  `--flag-type`: Use "adaptive" or "constant;learning rate value"
 
-## Docker
-The Dockerfile in `symnet-docker` sets up a minimal Debian Stretch system with Python 3.7 and
-required packages installed. Run it with  
+### Sample commands
 
-    docker run -it -v [host-src:]/symnet symnet /bin/bash
+Adaptive learning rate
+```
+python3 symnet.py --dataset "/home/gene_dataset/GEO_tr_1/X2_tr.npy,/home/gene_dataset/GEO_tr_1/Y2_tr.npy,/home/gene_dataset/GEO_tr_1/X_va.npy,/home/gene_dataset/GEO_tr_1/Y_va.npy" --batch-size 200 --epochs 1000 --flag-type "adaptive" 
+```
+Constant learning rate
+```
+python3 symnet.py --dataset "/home/gene_dataset/GEO_tr_1/X2_tr.npy,/home/gene_dataset/GEO_tr_1/Y2_tr.npy,/home/gene_dataset/GEO_tr_1/X_va.npy,/home/gene_dataset/GEO_tr_1/Y_va.npy" --batch-size 200 --epochs 1000 --flag-type "constant;0.1" 
+```
 
-This starts up an interactive terminal, mounts a volume at `/symnet` in the container,
-and runs a Bash shell. You can change the command run in the
-last argument.
-   
-## Todo
--  [ ]  Add DenseNet architecture
--  [ ]  Add support for text datasets
--  [ ]  Add support for image segmentation tasks
--  [ ]  Resize and normalize images
--  [ ]  For images, use LipschitzLR scheduler
+## References
+<a id="1">[1]</a> 
+Y.  Chen,  Y.  Li,  R.  Narayan,  A.  Subramanian,  and  X.  Xie,  “Geneexpression  inference  with  deep  learning,”Bioinformatics,  vol.  32,no. 12, pp. 1832–1839, 2016
 
-## Cite our work
-SymNet uses the LipschitzLR learning rate policy: [arXiv:1902.07399](https://arxiv.org/abs/1902.07399)
+<a id="2">[2]</a> 
+G. Consortiumet al., “The genotype-tissue expression (gtex) pilotanalysis: multitissue gene regulation in humans,”Science, vol. 348,no. 6235, pp. 648–660, 2015.
 
-BibTeX entry:  
-
-    @article{yedida2019novel,
-      title={A novel adaptive learning rate scheduler for deep neural networks},
-      author={Yedida, Rahul and Saha, Snehanshu},
-      journal={arXiv preprint arXiv:1902.07399},
-      year={2019}
-    }
-
-SymNet also implements the SBAF and A-ReLU activation functions: [arXiv:1906.01975](https://arxiv.org/abs/1906.01975). 
-If you use these, please cite:  
-
-    @article{saha2019evolution,
-      title={Evolution of Novel Activation Functions in Neural Network Training with Applications to Classification of Exoplanets},
-      author={Saha, Snehanshu and Nagaraj, Nithin and Mathur, Archana and Yedida, Rahul},
-      journal={arXiv preprint arXiv:1906.01975},
-      year={2019}
-    }
+<a id="3">[3]</a> 
+T.  Lappalainen,  M.  Sammeth,  M.  R.  Friedl ̈ander,  P.  AC‘t  Hoen,J.   Monlong,   M.   A.   Rivas,   M.   Gonzalez-Porta,   N.   Kurbatova,T.   Griebel,   P.   G.   Ferreiraet   al.,   “Transcriptome   and   genomesequencing uncovers functional variation in humans,”Nature, vol.501, no. 7468, pp. 506–511, 2013

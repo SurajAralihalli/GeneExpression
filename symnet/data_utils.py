@@ -2,19 +2,9 @@
 import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler,MinMaxScaler
 from keras.utils import to_categorical
 import numpy as np
-
-
-def normalize(data):
-    """
-    Normalize the data
-    :param data: array-like. The data, excluding the labels
-    :return: Normalized data
-    """
-    scaler = StandardScaler()
-    return scaler.fit_transform(data)
 
 
 def rebalance(frame: pd.DataFrame, col: str):
@@ -33,8 +23,8 @@ def rebalance(frame: pd.DataFrame, col: str):
     return frame_new
 
 
-def read_data(path: str, label_column: str = None, header: int = 0, balance: bool = True, train_size: float = 0.7,
-              categorize=True):
+def read_data(path: str, balance: bool = True, train_size: float = 0.7,
+):
     """
     Reads a CSV data file, optionally balance it, and split into train/test sets.
     :param path: str. Path to the CSV file
@@ -42,39 +32,21 @@ def read_data(path: str, label_column: str = None, header: int = 0, balance: boo
     :param header: Boolean. True if CSV file has a header
     :param balance: Boolean. True if data should be rebalanced
     :param train_size: float. Percentage of data to be taken as training set
-    :param categorize: bool. If True, uses to_categorical to generate one-hot encoded outputs.
+    :param categorize: bool. If True, uses to_categorical to generate one-hot encoded outputs
+    :param file_type: str. If binary, a binary npy file is read. If csv, a csv file is read. 
     :return: (X, y) tuple
     """
-    if path is None or not os.path.exists(path):
-        print('WARNING: Path does not exist, or is None.')
-        return [[]], []
 
-    df = pd.read_csv(path, header=header)
-    if len(df.columns) == 0:
-        print('WARNING: File has no columns')
-        return [[]], []
-
-    if label_column is None:
-        label_column = df.columns[-1]
-
-    train_df, test_df = train_test_split(df, train_size=train_size)
-
-    if balance:
-        train_df = rebalance(train_df, label_column)
-
-    y = train_df[label_column]
-    y_test = test_df[label_column]
-    train_df.drop(label_column, axis=1, inplace=True)
-    test_df.drop(label_column, axis=1, inplace=True)
-
-    if categorize:
-        y_train = to_categorical(np.array(y))
-        y_test = to_categorical(np.array(y_test))
-    else:
-        y_train = np.array(y)
-        y_test = np.array(y_test)
-
-    x_train = np.array(train_df)
-    x_test = np.array(test_df)
+        
+ 
+    print("Reading a binary file")
+    # Read a npy file 
+    x_train_path,y_train_path,x_val_path,y_val_path=tuple(path.split(","))
+    print(x_train_path,y_train_path,x_val_path,y_val_path)
+    
+    x_train=np.load(x_train_path)
+    y_train=np.load(y_train_path)
+    x_test=np.load(x_val_path)
+    y_test=np.load(y_val_path)
 
     return x_train, x_test, y_train, y_test
